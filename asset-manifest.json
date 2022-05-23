@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/bp22_mips_hulek/static/css/main.1246baee.css",
+    "main.js": "/bp22_mips_hulek/static/js/main.d3453e91.js",
+    "static/media/pipeline-all.svg": "/bp22_mips_hulek/static/media/pipeline-all.5374ac0b1144871b6b884578fe365cee.svg",
+    "static/media/dataTransfer.asm": "/bp22_mips_hulek/static/media/dataTransfer.153b48c22598b36f1b6d.asm",
+    "static/media/functionCall.asm": "/bp22_mips_hulek/static/media/functionCall.b4b47dc3aef06fbec0ea.asm",
+    "static/media/userInput.asm": "/bp22_mips_hulek/static/media/userInput.630296d4efcd18c0b087.asm",
+    "index.html": "/bp22_mips_hulek/index.html",
+    "static/media/branchesAndJumps.asm": "/bp22_mips_hulek/static/media/branchesAndJumps.f4e22c9a6be5dc33ee33.asm",
+    "static/media/arithmetic.asm": "/bp22_mips_hulek/static/media/arithmetic.bdcb7594521f992d1667.asm",
+    "main.1246baee.css.map": "/bp22_mips_hulek/static/css/main.1246baee.css.map",
+    "main.d3453e91.js.map": "/bp22_mips_hulek/static/js/main.d3453e91.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.1246baee.css",
+    "static/js/main.d3453e91.js"
+  ]
+}
