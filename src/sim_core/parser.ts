@@ -23,21 +23,12 @@ export interface IParsed {
 
 export class Parser {
     private parsingArea: ParsingArea = ParsingArea.text
-    private globl: string
+    private globl: string | undefined;
     private labels: P.Ilabel[] = [];
     private Instructions: I.IInstruction[] = [];
     private staticData: M.IMemStaticData[] = [];
     private staticDataAdd: number = 0;
     private alignNext: number = -1; // -1 = no align
-
-    reset() {
-        this.parsingArea = ParsingArea.text
-        this.Instructions = [];
-        this.labels = [];
-        this.staticData = [];
-        this.staticDataAdd = 0;
-        this.alignNext = -1;
-    }
 
     parse(code: string): IParsed {
         let codeLines = code.split("\n").map((e) => { return e.split(/#(?![^"]*")/g)[0].trim() }); // split for comments
@@ -52,7 +43,7 @@ export class Parser {
                 this.parsingArea = ParsingArea.data
             } else if (lineParts[0] === ".globl" && lineParts.length === 2) {
                 if (this.globl) {
-                    setError(".globl can be set only once")
+                    setError(`Line ${i + 1}: .globl can be set only onc`)
                 }
                 this.globl = lineParts[1];
             } else {
@@ -72,7 +63,7 @@ export class Parser {
                 this.parsingArea = ParsingArea.data
             } else if (lineParts[0] === ".globl" && lineParts.length === 2) {
                 if (this.globl) {
-                    setError(".globl can be set only once");
+                    setError(`Line ${i + 1}: .globl can be set only once`);
                 }
                 this.globl = lineParts[1];
             } else {
@@ -92,10 +83,14 @@ export class Parser {
     private parseData(lineParts: string[], i: number) {
         if (this.parsingArea !== ParsingArea.data) {
             if (lineParts[0].endsWith(":")) {
-                if (Object.values(I.EInstructionName).includes(lineParts[0].slice(0, -1) as unknown as I.EInstructionName)) {
-                    setError("Label cant have same name as instruction");
+                let labelName = lineParts[0].slice(0, -1)
+                if (Object.values(I.EInstructionName).includes(labelName as unknown as I.EInstructionName)) {
+                    setError(`Line ${i + 1}: Label cant have same name as instruction`);
                 }
-                this.labels.push({ line: i + 1, address: i + 1, name: lineParts[0].slice(0, -1) })
+                if (this.labels.some(e => e.name === labelName)) {
+                    setError(`Line ${i + 1}: Label '${labelName}' already exists`);
+                }
+                this.labels.push({ line: i + 1, address: i + 1, name: labelName })
             }
             return;
         }
@@ -106,7 +101,7 @@ export class Parser {
 
         if (lineParts[0] === M.EMemStaticOperations.align) {
             if (lineParts.length !== 2 || isNaN(Number(lineParts[1]))) {
-                setError("Align must have one number parameter");
+                setError(`Line ${i + 1}: Align must have one number parameter`);
             }
             this.alignNext = Number(lineParts[1]);
             return;
@@ -115,31 +110,31 @@ export class Parser {
         if (/^_?[a-zA-Z][a-zA-Z0-9_]*:$/.test(lineParts[0])) {
             con.name = lineParts[0].slice(0, -1);
             if (Object.values(I.EInstructionName).includes(con.name as unknown as I.EInstructionName)) {
-                setError("Label cant have same name as instruction");
+                setError(`Line ${i + 1}: Label cant have same name as instruction`);
             } else if (this.staticData.some(e => e.name === con.name)) {
-                setError("Label cant have same name as other label");
+                setError(`Line ${i + 1}: Label cant have same name as other label`);
             }
         } else {
-            setError("Wrong name of static value: " + lineParts[0]);
+            setError(`Line ${i + 1}: Wrong name of static value: ${lineParts[0]}`);
         }
 
         let directiveId = Object.keys(M.EMemStaticOperations).indexOf(lineParts[1].substring(1))
         if (directiveId === -1) {
-            setError("Wrong Directive");
+            setError(`Line ${i + 1}: Wrong Directive`);
         } else {
             con.type = Object.values(M.EMemStaticOperations)[directiveId]
         }
 
         if (con.type === M.EMemStaticOperations.space) {
             if (isNaN(Number(lineParts[2])) || lineParts.length !== 3) {
-                setError("Wrong Space definition");
+                setError(`Line ${i + 1}: Wrong Space definition`);
             } else {
                 con.value = new Int8Array(Number(lineParts[2]))
             }
         } else if (con.type === M.EMemStaticOperations.ascii || con.type === M.EMemStaticOperations.asciiz) {
             lineParts.slice(2).join(" ");
             if (lineParts.length !== 3 || !/^".*"$/.test(lineParts[2])) {
-                setError("Wrong ascii/z definition");
+                setError(`Line ${i + 1}: Wrong ascii/z definition`);
             }
             let enc = new TextEncoder();
             let txt = lineParts[2].slice(1, -1)
@@ -152,15 +147,15 @@ export class Parser {
         } else {
             let vals = lineParts.slice(2).map(e => {
                 if (isNaN(Number(e))) {
-                    if (!/^'.'$/.test(e)) {
-                        setError("Wrong number definition");
+                    if (!/^'.'$/.test(e)) { // not char
+                        setError(`Line ${i + 1}: Wrong number definition`);
                     }
                     return e.charCodeAt(1);
                 }
                 return Number(e);
             })
             if (vals.filter(e => isNaN(e)).length > 0) {
-                setError("Wrong elements in array");
+                setError(`Line ${i + 1}: Wrong elements in array`);
             }
             if (con.type === M.EMemStaticOperations.byte) {
                 con.value = new Int8Array(vals)
@@ -193,17 +188,17 @@ export class Parser {
                 description: I.instruction_set[insName], address: 0, line: i + 1, paramType: [],
                 originalNotation: lineParts.join(", ").replace(",", "")
             };
-            ins = this.parseInstruction(insName, ins, lineParts);
+            ins = this.parseInstruction(ins, lineParts);
             ins = ins.description.checkParsed(ins)
             this.Instructions.push(ins)
         } else {
-            setError(`Instruction ${lineParts[0]} do not exist;`);
+            setError(`Line ${i + 1}: Instruction '${lineParts[0]}' do not exist`);
         }
     }
 
-    private parseInstruction(insName: I.EInstructionName, ins: I.IInstruction, lineParts: string[]): I.IInstruction {
+    private parseInstruction(ins: I.IInstruction, lineParts: string[]): I.IInstruction {
         paramTypeLoop:
-        for (const paramType of I.instruction_set[insName].paramTypes) {
+        for (const paramType of ins.description.paramTypes) {
             let instr = deepcopy(ins);
             instr.paramType = paramType;
 
@@ -238,7 +233,7 @@ export class Parser {
                         continue paramTypeLoop;
                     } else {
                         if (Number(param) > 0xffffffff) {
-                            setError("Immidiate value is too big");
+                            setError(`Line ${ins.line}: Immidiate value is too big`);
                         }
                         instr.imm = Number(param)
                     }
@@ -268,7 +263,7 @@ export class Parser {
             }
             return instr;
         }
-        setError(`Wrong Instruction format on line ${ins.line}`);
+        setError(`Line ${ins.line}: Wrong Instruction format`);
         throw new Error("");
     }
 }

@@ -115,7 +115,7 @@ export class Registers {
         console.log(this.registers)
     }
 
-    setAllRegisters(): void {
+    setRegistersRedux(): void {
         setRegistersForRedux([...this.registers, { name: EHiLoRegisters.$hi, value: this.$hi }, { name: EHiLoRegisters.$lo, value: this.$lo }])
     }
 }
