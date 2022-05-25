@@ -62,7 +62,7 @@ function App() {
 
 	useEffect(() => {
 		parseAndSetProgram()
-	}, [parser])
+	}, [parser]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let parseAndSetProgram = async () => {
 		let parsed = parser.parse(value)
@@ -79,11 +79,11 @@ function App() {
 		setBase('Data')
 		setStart(M.dataRange.from);
 		setEnd(M.dataRange.from + 4 * 20);
-	}, [])
+	}, []) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let step = useCallback(() => {
 		pipeline.step(endCallback);
-	}, [pipeline])
+	}, [pipeline]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let pause = useCallback(() => {
 		pipeline.pause()
@@ -98,12 +98,12 @@ function App() {
 		setBase('Data')
 		setStart(M.dataRange.from);
 		setEnd(M.dataRange.from + 4 * 20);
-	}, [pause])
+	}, [pause]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let run = useCallback(() => {
 		pipeline.run(endCallback)
 		setRunning(true)
-	}, [pipeline])
+	}, [pipeline]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let endCallback = useCallback(() => {
 		setRunning(false)
@@ -114,11 +114,11 @@ function App() {
 		dispatch(actions.clearError())
 		pause()
 		setAssembled(false)
-	}, [pause])
+	}, [pause]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let setInputValue = useCallback((value: string) => {
 		dispatch(actions.setInputValue(value))
-	}, [])
+	}, []) // eslint-disable-line react-hooks/exhaustive-deps
 
 	let setMemoryRange = useCallback((start: number, end: number) => {
 		pipeline.updateMemoryRangeBuffer(start, end)
